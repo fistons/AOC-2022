@@ -1,22 +1,14 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
 pub fn part_1_and_2(input_path: String, top: usize) -> anyhow::Result<u32> {
-    let reader = BufReader::new(File::open(input_path)?);
+    let reader = std::fs::read_to_string(input_path)?;
 
-    let mut current_elf_total = 0u32;
     let mut totals: Vec<u32> = vec![];
-
-    for line in reader.lines() {
-        let line = line?;
-        if line.is_empty() {
-            totals.push(current_elf_total);
-            current_elf_total = 0;
-        } else {
-            current_elf_total += line.parse::<u32>()?;
+    for group in reader.split("\n\n") {
+        let mut total = 0u32;
+        for line in group.split("\n") {
+            total += line.parse::<u32>()?;
         }
+        totals.push(total);
     }
-    totals.push(current_elf_total); // Ugly.
 
     totals.sort_by(|a, b| b.cmp(a));
 
