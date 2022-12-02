@@ -7,12 +7,12 @@ enum Hand {
 
 impl From<&str> for Hand {
     fn from(value: &str) -> Self {
-        return match value {
+        match value {
             "A" | "X" => Hand::Rock,
             "B" | "Y" => Hand::Paper,
             "C" | "Z" => Hand::Scissors,
             _ => panic!(),
-        };
+        }
     }
 }
 
@@ -25,12 +25,12 @@ enum Outcome {
 
 impl From<&str> for Outcome {
     fn from(value: &str) -> Self {
-        return match value {
+        match value {
             "X" => Outcome::Lose,
             "Y" => Outcome::Draw,
             "Z" => Outcome::Win,
             _ => panic!(),
-        };
+        }
     }
 }
 
