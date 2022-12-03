@@ -3,14 +3,8 @@ pub fn part1(input_path: &str) -> anyhow::Result<u32> {
         .lines()
         .map(|line| line.split_at(line.len() / 2)) // Split in the middle
         .map(|(x, y)| {
-            (
-                x.chars().collect::<Vec<char>>(),
-                y.chars().collect::<Vec<char>>(),
-            )
-        }) // map to two list of chars
-        .map(|(x, y)| {
-            for a in x {
-                if y.contains(&a) {
+            for a in x.chars() {
+                if y.contains(a) {
                     return a;
                 }
             }
