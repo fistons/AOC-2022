@@ -16,7 +16,24 @@ pub fn part1(input_path: &str) -> anyhow::Result<u32> {
             }
             unreachable!() // happens if no common char found. Should not happen, right?
         }) // Map to the common char
-        .map(score) // I'm pretty sure there is much better way to do it
+        .map(score) // Compute the score in a ugly way
+        .sum())
+}
+
+pub fn part2(input_path: &str) -> anyhow::Result<u32> {
+    Ok(std::fs::read_to_string(input_path)?
+        .lines()
+        .collect::<Vec<&str>>() // Collect as Vec of &str
+        .chunks(3) // Read 3 by 3
+        .map(|slice| {
+            for a in slice[0].chars() {
+                if slice[1].contains(a) && slice[2].contains(a) {
+                    return a;
+                }
+            }
+            unreachable!()
+        }) // Check for each char of first line that it is present it line 2 and 3
+        .map(score) // Compute the score
         .sum())
 }
 
@@ -31,10 +48,6 @@ fn score(c: char) -> u32 {
     }
 }
 
-pub fn part2() -> anyhow::Result<u32> {
-    Ok(0)
-}
-
 #[cfg(test)]
 mod test {
     use crate::{part1, part2};
@@ -46,6 +59,6 @@ mod test {
 
     #[test]
     pub fn test_part2() {
-        assert_eq!(0, part2().unwrap())
+        assert_eq!(70, part2("input_test.txt").unwrap())
     }
 }
