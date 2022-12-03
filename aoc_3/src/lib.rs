@@ -13,7 +13,7 @@ pub fn part1(input_path: &str) -> anyhow::Result<u32> {
             }
             unreachable!() // happens if no common char found. Should not happen, right?
         }) // Map to the common char
-        .map(score) // Compute the score in a ugly way
+        .map(|x| score(&x)) // Compute the score in a ugly way
         .sum())
 }
 
@@ -28,7 +28,7 @@ pub fn part1_hashset(input_path: &str) -> anyhow::Result<u32> {
             )
         }) // Map both part as HashSet, to use the intersection method
         .map(|(x, y)| *x.intersection(&y).collect::<Vec<&char>>()[0]) // What can possibly go wrong if there is no intersection? Everything.
-        .map(score) // Compute the score in a ugly way
+        .map(|x| score(&x)) // Compute the score in a ugly way
         .sum())
 }
 
@@ -47,19 +47,18 @@ pub fn part2(input_path: &str) -> anyhow::Result<u32> {
             }
             unreachable!() // It can't be. Can it?
         }) // Check for each char of line n that it is present it line n + 1 and n + 2
-        .map(score) // Compute the score
+        .map(|x| score(&x)) // Compute the score
         .sum())
 }
 
 /// #Compute the score of a char.
 ///
 /// I'm pretty sure there is much better way to do it.
-/// We copy the char here and could use a reference, but heh.
-fn score(c: char) -> u32 {
+fn score(c: &char) -> u32 {
     if c.is_uppercase() {
-        c as u32 - 65 + 27 // 65 the value of A in ASCII + 27 the value priority of A in the exercice
+        *c as u32 - 65 + 27 // 65 the value of A in ASCII + 27 the value priority of A in the exercice
     } else {
-        c as u32 - 97 + 1 // 94 the value of a in ASCII + 1 the value priority of a in the exercice
+        *c as u32 - 97 + 1 // 94 the value of a in ASCII + 1 the value priority of a in the exercice
     }
 }
 
