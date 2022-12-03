@@ -3,6 +3,7 @@ pub fn part1(input_path: &str) -> anyhow::Result<u32> {
         .lines()
         .map(|line| line.split_at(line.len() / 2)) // Split in the middle
         .map(|(x, y)| {
+            // For each char of the first half, check that is is present in the second
             for a in x.chars() {
                 if y.contains(a) {
                     return a;
@@ -20,12 +21,14 @@ pub fn part2(input_path: &str) -> anyhow::Result<u32> {
         .collect::<Vec<&str>>() // Collect as Vec of &str
         .chunks(3) // Read 3 by 3
         .map(|slice| {
+            // For each char of the first line of the chunk, check that it is present in both second
+            // and third line.
             for a in slice[0].chars() {
                 if slice[1].contains(a) && slice[2].contains(a) {
                     return a;
                 }
             }
-            unreachable!()
+            unreachable!() // It can't be.
         }) // Check for each char of first line that it is present it line 2 and 3
         .map(score) // Compute the score
         .sum())
@@ -36,9 +39,9 @@ pub fn part2(input_path: &str) -> anyhow::Result<u32> {
 /// I'm pretty sure there is much better way to do it.
 fn score(c: char) -> u32 {
     if c.is_uppercase() {
-        c as u32 - 65 + 27
+        c as u32 - 65 + 27 // 65 the value of A in ASCII + 27 the value priority of A in the exercice
     } else {
-        c as u32 - 97 + 1
+        c as u32 - 97 + 1 // 94 the value of a in ASCII + 1 the value priority of a in the exercice
     }
 }
 
