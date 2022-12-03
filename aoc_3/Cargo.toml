@@ -13,5 +13,12 @@ path = "src/main.rs"
 name = "aoc_3"
 path = "src/lib.rs"
 
+[[bench]]
+name = "bench"
+harness = false
+
 [dependencies]
 anyhow.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub fn part1(input_path: &str) -> anyhow::Result<u32> {
     Ok(std::fs::read_to_string(input_path)?
         .lines()
@@ -11,6 +13,21 @@ pub fn part1(input_path: &str) -> anyhow::Result<u32> {
             }
             unreachable!() // happens if no common char found. Should not happen, right?
         }) // Map to the common char
+        .map(score) // Compute the score in a ugly way
+        .sum())
+}
+
+pub fn part1_hashset(input_path: &str) -> anyhow::Result<u32> {
+    Ok(std::fs::read_to_string(input_path)?
+        .lines()
+        .map(|line| line.split_at(line.len() / 2)) // Split in the middle
+        .map(|(x, y)| {
+            (
+                x.chars().collect::<HashSet<char>>(),
+                y.chars().collect::<HashSet<char>>(),
+            )
+        })
+        .map(|(x, y)| *x.intersection(&y).collect::<Vec<&char>>()[0]) // What can possibly go wrong if there is no intersection
         .map(score) // Compute the score in a ugly way
         .sum())
 }
@@ -34,9 +51,10 @@ pub fn part2(input_path: &str) -> anyhow::Result<u32> {
         .sum())
 }
 
-/// #Compute the score of a char
+/// #Compute the score of a char.
 ///
 /// I'm pretty sure there is much better way to do it.
+/// We copy the char here and could use a reference, but heh.
 fn score(c: char) -> u32 {
     if c.is_uppercase() {
         c as u32 - 65 + 27 // 65 the value of A in ASCII + 27 the value priority of A in the exercice
@@ -51,6 +69,11 @@ mod test {
 
     #[test]
     pub fn test_part1() {
+        assert_eq!(157, part1("input_test.txt").unwrap())
+    }
+
+    #[test]
+    pub fn test_part1_hashset() {
         assert_eq!(157, part1("input_test.txt").unwrap())
     }
 

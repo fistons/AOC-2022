@@ -39,6 +39,7 @@ name = "aoc_3"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "criterion",
 ]
 
 [[package]]
