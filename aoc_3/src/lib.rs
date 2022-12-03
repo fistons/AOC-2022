@@ -26,8 +26,8 @@ pub fn part1_hashset(input_path: &str) -> anyhow::Result<u32> {
                 x.chars().collect::<HashSet<char>>(),
                 y.chars().collect::<HashSet<char>>(),
             )
-        })
-        .map(|(x, y)| *x.intersection(&y).collect::<Vec<&char>>()[0]) // What can possibly go wrong if there is no intersection
+        }) // Map both part as HashSet, to use the intersection method
+        .map(|(x, y)| *x.intersection(&y).collect::<Vec<&char>>()[0]) // What can possibly go wrong if there is no intersection? Everything.
         .map(score) // Compute the score in a ugly way
         .sum())
 }
@@ -45,8 +45,8 @@ pub fn part2(input_path: &str) -> anyhow::Result<u32> {
                     return a;
                 }
             }
-            unreachable!() // It can't be.
-        }) // Check for each char of first line that it is present it line 2 and 3
+            unreachable!() // It can't be. Can it?
+        }) // Check for each char of line n that it is present it line n + 1 and n + 2
         .map(score) // Compute the score
         .sum())
 }
