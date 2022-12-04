@@ -9,6 +9,10 @@ impl Area {
     fn contains(&self, other: &Area) -> bool {
         self.start <= other.start && self.end >= other.end
     }
+
+    fn overlap(&self, other: &Area) -> bool {
+        self.end >= other.start && self.start <= other.end
+    }
 }
 
 impl TryFrom<&str> for Area {
@@ -37,12 +41,25 @@ pub fn part1(input_path: &str) -> anyhow::Result<u32> {
         .count() as u32)
 }
 
+pub fn part2(input_path: &str) -> anyhow::Result<u32> {
+    Ok(std::fs::read_to_string(input_path)?
+        .lines()
+        .filter_map(|x| parse(x).ok())
+        .filter(|(a, b)| a.overlap(b))
+        .count() as u32)
+}
+
 #[cfg(test)]
 mod test {
-    use crate::part1;
+    use crate::{part1, part2};
 
     #[test]
     pub fn test_part1() {
         assert!(matches!(part1("input_test.txt"), Ok(2)));
+    }
+
+    #[test]
+    pub fn test_part2() {
+        assert!(matches!(part2("input_test.txt"), Ok(4)));
     }
 }
