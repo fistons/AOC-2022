@@ -16,3 +16,4 @@ members = [
 [workspace.dependencies]
 anyhow = "1"
 criterion = "0.4.0"
+itertools = "0.10"

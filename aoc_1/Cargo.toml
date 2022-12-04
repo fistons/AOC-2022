@@ -20,7 +20,7 @@ harness = false
 
 [dependencies]
 anyhow.workspace = true
-itertools = "0.10"
+itertools.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
