@@ -1,3 +1,5 @@
+use std::fmt::Error;
+
 struct Area {
     start: u32,
     end: u32,
@@ -9,26 +11,28 @@ impl Area {
     }
 }
 
-impl From<&str> for Area {
-    fn from(input: &str) -> Self {
-        let (low, high) = input.split_once('-').unwrap();
-        let (low, high): (u32, u32) = (low.parse().unwrap(), high.parse().unwrap());
-        Area {
+impl TryFrom<&str> for Area {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let (low, high) = value.split_once('-').ok_or_else(Error::default)?;
+        let (low, high): (u32, u32) = (low.parse()?, high.parse()?);
+        Ok(Area {
             start: low,
             end: high,
-        }
+        })
     }
 }
 
-fn parse(line: &str) -> (Area, Area) {
-    let (first, second) = line.split_once(',').unwrap();
-    (first.into(), second.into())
+fn parse(line: &str) -> anyhow::Result<(Area, Area)> {
+    let (first, second) = line.split_once(',').ok_or_else(Error::default)?;
+    Ok((first.try_into()?, second.try_into()?))
 }
 
 pub fn part1(input_path: &str) -> anyhow::Result<u32> {
     Ok(std::fs::read_to_string(input_path)?
         .lines()
-        .map(parse)
+        .filter_map(|x| parse(x).ok())
         .filter(|(a, b)| a.contains(b) || b.contains(a))
         .count() as u32)
 }
@@ -39,6 +43,6 @@ mod test {
 
     #[test]
     pub fn test_part1() {
-        assert_eq!(2, part1("input_test.txt").unwrap());
+        assert!(matches!(part1("input_test.txt"), Ok(2)));
     }
 }
