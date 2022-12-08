@@ -3,7 +3,7 @@ use std::fmt::{Debug, Formatter};
 
 use take_until::TakeUntilExt;
 
-#[derive(Eq, PartialEq, Hash, Clone)]
+#[derive(Eq, PartialEq)]
 struct Tree {
     pub x: usize,
     pub y: usize,
