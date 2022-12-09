@@ -153,11 +153,11 @@ mod tests {
 
     #[test]
     pub fn test_part1() {
-        assert_eq!(part1("input_test.txt"), Some(21))
+        assert_eq!(part1("input_test_part1.txt"), Some(21))
     }
 
     #[test]
     pub fn test_part2() {
-        assert_eq!(part2("input_test.txt"), Some(8))
+        assert_eq!(part2("input_test_part1.txt"), Some(8))
     }
 }

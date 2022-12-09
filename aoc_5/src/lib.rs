@@ -116,11 +116,11 @@ mod tests {
 
     #[test]
     pub fn test_part1() {
-        assert_eq!(String::from("CMZ"), part1("input_test.txt").unwrap());
+        assert_eq!(String::from("CMZ"), part1("input_test_part1.txt").unwrap());
     }
 
     #[test]
     pub fn test_part2() {
-        assert_eq!(String::from("MCD"), part2("input_test.txt").unwrap());
+        assert_eq!(String::from("MCD"), part2("input_test_part1.txt").unwrap());
     }
 }

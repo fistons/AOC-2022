@@ -68,11 +68,11 @@ mod test {
 
     #[test]
     pub fn test_part1() {
-        assert!(matches!(part1("input_test.txt"), Ok(2)));
+        assert!(matches!(part1("input_test_part1.txt"), Ok(2)));
     }
 
     #[test]
     pub fn test_part2() {
-        assert!(matches!(part2("input_test.txt"), Ok(4)));
+        assert!(matches!(part2("input_test_part1.txt"), Ok(4)));
     }
 }

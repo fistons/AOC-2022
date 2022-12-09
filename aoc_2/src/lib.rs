@@ -78,11 +78,11 @@ mod tests {
 
     #[test]
     pub fn test1() {
-        assert_eq!(15, part1("input_test.txt").unwrap());
+        assert_eq!(15, part1("input_test_part1.txt").unwrap());
     }
 
     #[test]
     pub fn test2() {
-        assert_eq!(12, part2("input_test.txt").unwrap());
+        assert_eq!(12, part2("input_test_part1.txt").unwrap());
     }
 }
