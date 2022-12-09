@@ -10,7 +10,3 @@ path = "src/main.rs"
 [lib]
 name = "aoc_9"
 path = "src/lib.rs"
-
-[dependencies]
-
-itertools.workspace = true

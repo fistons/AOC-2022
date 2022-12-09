@@ -76,9 +76,6 @@ dependencies = [
 [[package]]
 name = "aoc_9"
 version = "0.1.0"
-dependencies = [
- "itertools",
-]
 
 [[package]]
 name = "atty"
