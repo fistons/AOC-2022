@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::env::current_exe;
 
 #[derive(Debug)]
 enum Direction {
@@ -34,11 +33,7 @@ impl Rope {
         }
     }
 
-    pub fn move_rope2(&mut self, direction: &RopeMove) {
-        println!("{direction:?}");
-
-        let len = self.knots.len() as i32;
-
+    pub fn move_rope(&mut self, direction: &RopeMove) {
         // Move the head one by one
         for _ in 0..direction.count {
             match direction.direction {
@@ -47,53 +42,29 @@ impl Rope {
                 Direction::Right => self.head.0 += 1,
                 Direction::Left => self.head.0 -= 1,
             }
-            println!("New head {:?}", self.head);
 
-            for i in 0..len as usize {
+            for i in 0..self.knots.len() {
                 let precedent_knot_or_head = if i == 0 { self.head } else { self.knots[i - 1] };
                 let mut current_knot = self.knots.get_mut(i).unwrap();
 
                 let distance = distance(&precedent_knot_or_head, current_knot);
                 if !neighbors(&distance) {
-                    current_knot.0 += distance.0.signum();
+                    current_knot.0 += distance.0.signum(); // Move only by at most 1
                     current_knot.1 += distance.1.signum();
                 }
             }
-            self.print_tail();
-            println!("---")
-        }
-        println!("{self:?}");
-        self.print_tail();
-    }
-
-    fn print_tail(&self) {
-        let max_x = self.visited_by_tails.iter().map(|x| x.0).max().unwrap();
-        let min_x = self.visited_by_tails.iter().map(|x| x.0).min().unwrap();
-        let max_y = self.visited_by_tails.iter().map(|x| x.1).max().unwrap();
-        let min_y = self.visited_by_tails.iter().map(|x| x.1).min().unwrap();
-
-        for y in min_y..=max_y {
-            for x in min_x..=max_x {
-                if self.visited_by_tails.contains(&(x, y)) {
-                    print!("X ");
-                } else {
-                    print!(". ");
-                }
-            }
-            println!()
+            self.visited_by_tails.insert(*self.knots.last().unwrap());
         }
     }
 }
 
 fn distance((head_x, head_y): &(i32, i32), (tail_x, tail_y): &(i32, i32)) -> (i32, i32) {
-    ((head_x - tail_x).abs(), (head_y - tail_y).abs())
+    ((head_x - tail_x), (head_y - tail_y))
 }
 
 fn neighbors((hx, hy): &(i32, i32)) -> bool {
-    *hx > 1 || *hy > 1
+    hx.abs() <= 1 && hy.abs() <= 1
 }
-
-fn move_knot((knot_x, knot_y): &mut (i32, i32), (hx, hy): &(i32, i32)) {}
 
 pub fn solution(input_path: &str, rope_size: i32) -> Option<usize> {
     let mut rope = Rope::new(rope_size as usize);
@@ -102,7 +73,7 @@ pub fn solution(input_path: &str, rope_size: i32) -> Option<usize> {
         .lines()
         .filter_map(|x| x.split_once(' '))
         .map(parse_direction)
-        .for_each(|x| rope.move_rope2(&x));
+        .for_each(|x| rope.move_rope(&x));
 
     Some(rope.visited_by_tails.len())
 }
