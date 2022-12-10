@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug)]
 enum Instruction {
@@ -6,20 +7,24 @@ enum Instruction {
     Addx(i32),
 }
 
-fn print_pixel(register: &i32, cycles: &i32) {
+fn print_pixel<T>(register: &i32, cycles: &i32, output: &mut T)
+where
+    T: fmt::Write,
+{
     let tick = (cycles - 1) % 40;
     if (register - 1..=register + 1).contains(&tick) {
-        print!("#");
+        write!(output, "#").unwrap();
     } else {
-        print!(" ");
+        write!(output, " ").unwrap();
     }
 
     if tick == 39 {
-        println!();
+        writeln!(output).unwrap();
     }
 }
 
-pub fn part1(input_path: &str) -> Option<i32> {
+pub fn solution(input_path: &str) -> Option<(i32, String)> {
+    let mut output = String::default();
     let mut register = 1;
     let mut cycles = 1;
     let marks = vec![20, 60, 100, 140, 180, 220];
@@ -30,7 +35,7 @@ pub fn part1(input_path: &str) -> Option<i32> {
         .lines()
         .map(parse_instruction)
         .for_each(|instruction| {
-            print_pixel(&register, &cycles);
+            print_pixel(&register, &cycles, &mut output);
 
             cycles += 1;
             positions.insert(cycles, register);
@@ -38,7 +43,7 @@ pub fn part1(input_path: &str) -> Option<i32> {
             match instruction {
                 Instruction::Noop => (), // Nope.
                 Instruction::Addx(v) => {
-                    print_pixel(&register, &cycles);
+                    print_pixel(&register, &cycles, &mut output);
 
                     cycles += 1;
                     register += v;
@@ -52,7 +57,7 @@ pub fn part1(input_path: &str) -> Option<i32> {
         .filter(|(k, _)| marks.contains(*k))
         .map(|(k, v)| *k as i32 * v)
         .sum();
-    Some(sum)
+    Some((sum, output))
 }
 
 fn parse_instruction(line: &str) -> Instruction {
@@ -68,10 +73,15 @@ fn parse_instruction(line: &str) -> Instruction {
 
 #[cfg(test)]
 mod tests {
-    use crate::part1;
+    use crate::solution;
 
     #[test]
-    pub fn test_part1() {
-        assert_eq!(part1("input_test.txt"), Some(13140));
+    pub fn test_solution() {
+        let (sum, output) = solution("input_test.txt").unwrap();
+        assert_eq!(sum, 13140);
+        assert_eq!(
+            output,
+            std::fs::read_to_string("expected_output.txt").unwrap()
+        );
     }
 }
