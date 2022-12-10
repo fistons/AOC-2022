@@ -6,39 +6,53 @@ enum Instruction {
     Addx(i32),
 }
 
+fn print_pixel(register: &i32, cycles: &i32) {
+    let tick = (cycles - 1) % 40;
+    if (register - 1..=register + 1).contains(&tick) {
+        print!("#");
+    } else {
+        print!(" ");
+    }
+
+    if tick == 39 {
+        println!();
+    }
+}
+
 pub fn part1(input_path: &str) -> Option<i32> {
     let mut register = 1;
     let mut cycles = 1;
     let marks = vec![20, 60, 100, 140, 180, 220];
-    let mut position = HashMap::<i32, i32>::new();
+    let mut positions = HashMap::<i32, i32>::new();
 
     std::fs::read_to_string(input_path)
         .ok()?
         .lines()
         .map(parse_instruction)
-        .for_each(|i| {
+        .for_each(|instruction| {
+            print_pixel(&register, &cycles);
+
             cycles += 1;
-            match i {
-                Instruction::Noop => {
-                    if marks.contains(&cycles) {
-                        position.insert(cycles, register);
-                    }
-                }
+            positions.insert(cycles, register);
+
+            match instruction {
+                Instruction::Noop => (), // Nope.
                 Instruction::Addx(v) => {
-                    if marks.contains(&cycles) {
-                        position.insert(cycles, register);
-                    }
+                    print_pixel(&register, &cycles);
 
                     cycles += 1;
                     register += v;
-                    if marks.contains(&cycles) {
-                        position.insert(cycles, register);
-                    }
+                    positions.insert(cycles, register);
                 }
             };
         });
 
-    Some(position.iter().map(|(k, v)| k * v).sum())
+    let sum = positions
+        .iter()
+        .filter(|(k, _)| marks.contains(*k))
+        .map(|(k, v)| *k as i32 * v)
+        .sum();
+    Some(sum)
 }
 
 fn parse_instruction(line: &str) -> Instruction {
