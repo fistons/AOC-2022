@@ -40,10 +40,11 @@ struct Monkey {
     outcome_if_true: u32,
     outcome_if_false: u32,
     item_inspected: u32,
+    divider: u32,
 }
 
 impl Monkey {
-    pub fn new(line: &str) -> Self {
+    pub fn new(line: &str, divider: u32) -> Self {
         let mut lines = line.split('\n');
         let id: u32 = REGEX_ID
             .captures_iter(lines.next().unwrap())
@@ -117,6 +118,7 @@ impl Monkey {
             outcome_if_true,
             outcome_if_false,
             item_inspected: 0,
+            divider,
         }
     }
 
@@ -132,7 +134,7 @@ impl Monkey {
         (match self.formula.operation {
             Operation::Add => operand_1 + operand_2,
             Operation::Mul => operand_1 * operand_2,
-        }) / 3
+        }) / self.divider
     }
 
     pub fn inspect(&mut self, item: u32) -> u32 {
@@ -146,11 +148,11 @@ impl Monkey {
     }
 }
 
-pub fn part1(input_path: &str, iteration: u32) -> Option<u32> {
+pub fn part1(input_path: &str, iteration: u32, divider: u32) -> Option<u32> {
     let monkeys = std::fs::read_to_string(input_path)
         .ok()?
         .split("\n\n")
-        .map(Monkey::new)
+        .map(|line| Monkey::new(line, divider))
         .map(|monkey| (monkey.id, RefCell::new(monkey)))
         .collect::<HashMap<u32, RefCell<Monkey>>>();
     for i in 1..=iteration {
@@ -189,6 +191,11 @@ mod tests {
 
     #[test]
     pub fn test_part1() {
-        assert_eq!(part1("input_test.txt", 20), Some(10605));
+        assert_eq!(part1("input_test.txt", 20, 3), Some(10605));
+    }
+
+    #[test]
+    pub fn test_part2() {
+        assert_eq!(part1("input_test.txt", 10_000, 1), Some(2713310158));
     }
 }
