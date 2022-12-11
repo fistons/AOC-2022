@@ -1,3 +1,7 @@
+use aoc_11::part1;
+
 fn main() {
-    println!("Hello, world!");
+    if let Some(x) = part1("input.txt", 20) {
+        println!("Part 1: {x}");
+    }
 }
