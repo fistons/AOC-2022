@@ -40,25 +40,25 @@ mod test {
 
     #[test]
     pub fn test_part_1() {
-        let res = loop_version("input_test_part1.txt".to_owned(), 1);
+        let res = loop_version("input_test.txt".to_owned(), 1);
         assert_eq!(24000, res.unwrap());
     }
 
     #[test]
     pub fn test_part_2() {
-        let res = loop_version("input_test_part1.txt".to_owned(), 3);
+        let res = loop_version("input_test.txt".to_owned(), 3);
         assert_eq!(45000, res.unwrap());
     }
 
     #[test]
     pub fn test_part_1_iter() {
-        let res = iterator_version("input_test_part1.txt".to_owned(), 1);
+        let res = iterator_version("input_test.txt".to_owned(), 1);
         assert_eq!(24000, res.unwrap());
     }
 
     #[test]
     pub fn test_part_2_iter() {
-        let res = iterator_version("input_test_part1.txt".to_owned(), 3);
+        let res = iterator_version("input_test.txt".to_owned(), 3);
         assert_eq!(45000, res.unwrap());
     }
 }

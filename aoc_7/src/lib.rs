@@ -79,11 +79,11 @@ mod tests {
 
     #[test]
     pub fn test_part1() {
-        assert_eq!(part1("input_test_part1.txt"), Some(95437))
+        assert_eq!(part1("input_test.txt"), Some(95437))
     }
 
     #[test]
     pub fn test_part2() {
-        assert_eq!(part2("input_test_part1.txt"), Some(24933642))
+        assert_eq!(part2("input_test.txt"), Some(24933642))
     }
 }

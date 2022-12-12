@@ -68,16 +68,16 @@ mod test {
 
     #[test]
     pub fn test_part1() {
-        assert_eq!(157, part1("input_test_part1.txt").unwrap())
+        assert_eq!(157, part1("input_test.txt").unwrap())
     }
 
     #[test]
     pub fn test_part1_hashset() {
-        assert_eq!(157, part1("input_test_part1.txt").unwrap())
+        assert_eq!(157, part1("input_test.txt").unwrap())
     }
 
     #[test]
     pub fn test_part2() {
-        assert_eq!(70, part2("input_test_part1.txt").unwrap())
+        assert_eq!(70, part2("input_test.txt").unwrap())
     }
 }
