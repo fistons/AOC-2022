@@ -1,0 +1,12 @@
+[package]
+name = "aoc_12"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name="aoc_12"
+path="src/lib.rs"
+
+[[bin]]
+name="aoc_12"
+path="src/main.rs"
