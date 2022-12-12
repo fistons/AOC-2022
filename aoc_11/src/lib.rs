@@ -2,16 +2,15 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use itertools::Itertools;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::Regex;
 
-lazy_static! {
-    static ref REGEX_ID: Regex = Regex::new(r"(\d+)").unwrap();
-    static ref REGEX_ITEMS: Regex = Regex::new(r"Starting items: (.*)").unwrap();
-    static ref REGEX_OPERATION: Regex = Regex::new(r"Operation: new = (.+) (\D) (.+)").unwrap();
-    static ref REGEX_TEST: Regex = Regex::new(r"(\d+)").unwrap();
-    static ref REGEX_OUTCOME: Regex = Regex::new(r"(\d+)").unwrap();
-}
+static REGEX_ID: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)").unwrap());
+static REGEX_ITEMS: Lazy<Regex> = Lazy::new(|| Regex::new(r"Starting items: (.*)").unwrap());
+static REGEX_OPERATION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"Operation: new = (.+) (\D) (.+)").unwrap());
+static REGEX_TEST: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)").unwrap());
+static REGEX_OUTCOME: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)").unwrap());
 
 #[derive(Debug)]
 enum Operation {
