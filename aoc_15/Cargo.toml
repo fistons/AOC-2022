@@ -1,0 +1,17 @@
+[package]
+name = "aoc_15"
+version = "0.1.0"
+edition = "2021"
+
+
+[lib]
+name = "aoc_15"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aoc_15"
+path = "src/main.rs"
+
+[dependencies]
+rayon = "1"
+itertools.workspace = true
