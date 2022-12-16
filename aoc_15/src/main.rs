@@ -6,6 +6,6 @@ fn main() {
     }
 
     if let Some(x) = part2("input.txt", 4000000) {
-        println!("Part 1: {x}");
+        println!("Part 2: {x}");
     }
 }

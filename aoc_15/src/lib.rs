@@ -1,18 +1,16 @@
-use std::cmp;
 use std::collections::HashSet;
 use std::ops::RangeInclusive;
 
-use itertools::Itertools;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::prelude::*;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Copy, Ord, PartialOrd)]
-struct Position(i32, i32);
+struct Position(isize, isize);
 
 #[derive(Debug)]
 struct Sensor {
     position: Position,
-    distance: i32,
+    distance: isize,
 }
 
 impl Sensor {
@@ -21,16 +19,14 @@ impl Sensor {
         Sensor { position, distance }
     }
 
-    pub fn in_area(&self, position: &Position) -> bool {
-        let distance = Sensor::compute_distance(&self.position, position);
-        distance <= self.distance
-    }
-
-    fn compute_distance(p1: &Position, p2: &Position) -> i32 {
+    /// Compute the Manhattan distance between two point
+    fn compute_distance(p1: &Position, p2: &Position) -> isize {
         (p1.0 - p2.0).abs() + (p1.1 - p2.1).abs()
     }
 
-    fn get_x_range_for_y(&self, y_coord: &i32) -> Option<RangeInclusive<i32>> {
+    /// Return the range scanned by the sensors on a given y. If the area is no scanned at, return
+    /// None
+    fn get_x_range_for_y(&self, y_coord: &isize) -> Option<RangeInclusive<isize>> {
         let x_diff = self.distance - (self.position.1 - y_coord).abs();
         if x_diff < 0 {
             None
@@ -44,42 +40,47 @@ impl Sensor {
 struct Beacon {
     position: Position,
 }
-pub fn part1(input_path: &str, y_to_scan: i32) -> Option<usize> {
+pub fn part1(input_path: &str, y_to_scan: isize) -> Option<usize> {
     let input = std::fs::read_to_string(input_path)
         .ok()?
         .lines()
         .map(parse_input)
         .collect::<Vec<(Sensor, Beacon)>>();
 
+    // Find all the beacons on y
     let beacons_position_on_y = input
-        .iter()
+        .par_iter()
         .map(|(_, b)| b.position)
         .filter(|b| b.1 == y_to_scan)
         .collect::<HashSet<Position>>();
 
-    let mut scanned_positions = HashSet::new();
-
+    // Find all the ranges covered by the sensors on y
     let ranges = input
-        .iter()
+        .par_iter()
         .filter_map(|(s, _)| s.get_x_range_for_y(&y_to_scan))
-        .collect::<Vec<RangeInclusive<i32>>>();
+        .collect::<Vec<RangeInclusive<isize>>>();
 
+    // Min and Max of the x covered by the sensors
     let min_x = *ranges.iter().map(RangeInclusive::start).min().unwrap();
     let max_x = *ranges.iter().map(RangeInclusive::end).max().unwrap();
-    // Determine beacons on y_to_scan by brute forcing like a champ
-    for x in min_x..=max_x {
-        let position = Position(x, y_to_scan);
 
-        if ranges.iter().any(|r| r.contains(&x)) {
-            scanned_positions.insert(position);
-        }
-    }
-    let mut scanned_positions = scanned_positions.iter().collect::<Vec<&Position>>();
-    scanned_positions.sort();
+    // Return each position scanned by any sensors.
+    // Note: it would more efficient to build a global coverage range.
+    let scanned_positions = (min_x..=max_x)
+        .into_par_iter()
+        .filter_map(|x| {
+            let position = Position(x, y_to_scan);
+            ranges
+                .par_iter()
+                .find_map_any(|r| if r.contains(&x) { Some(position) } else { None })
+        })
+        .collect::<Vec<Position>>();
+
+    // Number of scanned position, less the kevin beacons
     Some(scanned_positions.len() - beacons_position_on_y.len())
 }
 
-pub fn part2(input_path: &str, max_size: i32) -> Option<i32> {
+pub fn part2(input_path: &str, max_size: isize) -> Option<isize> {
     let input = std::fs::read_to_string(input_path)
         .ok()?
         .lines()
@@ -90,51 +91,46 @@ pub fn part2(input_path: &str, max_size: i32) -> Option<i32> {
     let pos = find_the_spot(&input, max_size)?;
     Some((pos.0 * 4000000) + pos.1)
 }
-fn find_the_spot(sensors: &[Sensor], max_size: i32) -> Option<Position> {
-    for y in 0..=max_size {
-        let ranges = sensors
+
+/// Find the "hole" in the sensor coverage
+fn find_the_spot(sensors: &[Sensor], max_size: isize) -> Option<Position> {
+    (0..=max_size).into_par_iter().find_map_any(|y| {
+        // Build the range covered by the sensors on the y line
+        let mut ranges = sensors
             .par_iter()
             .flat_map(|x| x.get_x_range_for_y(&y))
-            .collect::<Vec<RangeInclusive<i32>>>();
+            .collect::<Vec<RangeInclusive<isize>>>();
 
-        // let mut sad = HashSet::new();
-        // ranges.into_iter().for_each(|x| {
-        //     for i in x {
-        //         sad.insert(i);
-        //     }
-        // });
-        // let mut sad = sad.into_iter().collect::<Vec<i32>>();
-        // sad.sort();
-        // println!("{ranges:?}");
-        let min_x = *ranges.iter().map(|x| x.start()).min().unwrap().max(&0);
-        let max_x = *ranges.iter().map(|x| x.end()).max().unwrap().min(&max_size);
+        // Search for hole in all those ranges
+        search_for_hole_in_ranges(&mut ranges, max_size).map(|x| Position(x, y))
+    })
+}
 
-        println!("{y}");
+/// Takes a slice of ranges, and check for "holes" in it (ie value not covered by any of the ranges)
+/// , stopping to the first one we find. Limits the range to scan from 0 to `max_width` included.
+/// Not my proudest code, but does the job
+fn search_for_hole_in_ranges(
+    ranges: &mut [RangeInclusive<isize>],
+    max_width: isize,
+) -> Option<isize> {
+    ranges.sort_by(|a, b| a.start().cmp(b.start())); // Sort the ranges
 
-        // let mut i = min_x;
-        // let mut s = sad.into_iter().filter(|x| *x >= 0 && *x <= max_size);
-        // loop {
-        //     if let Some(next) = s.next() {
-        //         // println!("{i} {next}");
-        //         if next != i {
-        //             return Some(Position(i, y));
-        //         }
-        //     } else {
-        //         println!("break");
-        //         break;
-        //     }
-        //     i += 1;
-        // }
-
-        for x in 0.max(min_x)..=max_size.min(max_x) {
-            if !ranges.iter().any(|r| r.contains(&x)) {
-                return Some(Position(x, y));
-            }
+    let mut range_coverage = &0isize..=ranges[0].end().max(&1); // Initial range, from 0 to as least 1.
+    for r in &ranges[1..] {
+        if *range_coverage.end() + 1 < *r.start() {
+            // If the end of the global range ends before the begin of the next range, there it is, we have our hole.
+            return Some(*range_coverage.end() + 1);
+        } else {
+            // "Extends the range
+            range_coverage =
+                *range_coverage.start()..=r.end().clamp(range_coverage.end(), &max_width);
         }
     }
-
     None
 }
+
+/// Parse a line of the input to return a tuple of Set/Beacon.
+/// This is so ugly, please forgive me.
 fn parse_input(line: &str) -> (Sensor, Beacon) {
     let split = line.split_once(':').unwrap();
 
@@ -156,11 +152,11 @@ fn parse_input(line: &str) -> (Sensor, Beacon) {
     let kevin_beacon_x = kevin_beacon_x.split_once('=').unwrap().1;
     let kevin_beacon_y = kevin_beacon_y.split_once('=').unwrap().1;
 
-    let sensor_x = sensor_x.parse::<i32>().unwrap();
-    let sensor_y = sensor_y.parse::<i32>().unwrap();
+    let sensor_x = sensor_x.parse::<isize>().unwrap();
+    let sensor_y = sensor_y.parse::<isize>().unwrap();
 
-    let kevin_beacon_x = kevin_beacon_x.parse::<i32>().unwrap();
-    let kevin_beacon_y = kevin_beacon_y.parse::<i32>().unwrap();
+    let kevin_beacon_x = kevin_beacon_x.parse::<isize>().unwrap();
+    let kevin_beacon_y = kevin_beacon_y.parse::<isize>().unwrap();
 
     let kevin_beacon = Beacon {
         position: Position(kevin_beacon_x, kevin_beacon_y),
@@ -169,31 +165,9 @@ fn parse_input(line: &str) -> (Sensor, Beacon) {
     (sensors, kevin_beacon)
 }
 
-fn overlapping(a: &RangeInclusive<i32>, b: &RangeInclusive<i32>) -> Option<RangeInclusive<i32>> {
-    // println!("Comparing {a:?} and {b:?}");
-    if !(b.start() <= a.end() || b.end() >= a.start()) {
-        println!("ho shit");
-        return None; //Not overlapping
-    }
-
-    let min = *a.start().min(b.start());
-    let max = *b.end().max(a.end());
-
-    Some(min..=max)
-}
-
-fn overlaps(one: &RangeInclusive<i32>, other: &RangeInclusive<i32>) -> bool {
-    (other.start() >= one.start() && other.start() <= one.end())
-        || (other.end() >= one.start() && other.end() <= one.end())
-}
-
-fn merge(one: &RangeInclusive<i32>, other: &RangeInclusive<i32>) -> RangeInclusive<i32> {
-    cmp::min(*one.start(), *other.start())..=cmp::max(*one.end(), *other.end())
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{overlapping, part1, part2, Position, Sensor};
+    use crate::{part1, part2, Position, Sensor};
 
     #[test]
     pub fn test_part1() {
@@ -218,16 +192,5 @@ mod tests {
         assert_eq!(sensor.get_x_range_for_y(&-3), None);
         assert_eq!(sensor.get_x_range_for_y(&-2), Some(8..=8));
         assert_eq!(sensor.get_x_range_for_y(&-1), Some(7..=9));
-    }
-
-    #[test]
-    pub fn test_intersection() {
-        let a = 0..=5;
-        let b = 3..=8;
-
-        let r = overlapping(&a, &b);
-        assert_eq!(r, Some(0..=8));
-        let r = overlapping(&b, &a);
-        assert_eq!(r, Some(0..=8));
     }
 }

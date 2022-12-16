@@ -14,4 +14,3 @@ path = "src/main.rs"
 
 [dependencies]
 rayon = "1"
-itertools.workspace = true

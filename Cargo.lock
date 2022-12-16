@@ -71,7 +71,6 @@ version = "0.1.0"
 name = "aoc_15"
 version = "0.1.0"
 dependencies = [
- "itertools",
  "rayon",
 ]
 
