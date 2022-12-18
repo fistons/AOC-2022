@@ -1,0 +1,16 @@
+[package]
+name = "aoc_16"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "aoc_16"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aoc_16"
+path = "src/main.rs"
+
+[dependencies]
+regex = "1"
+once_cell = "1"
