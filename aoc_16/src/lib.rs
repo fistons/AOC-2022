@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use once_cell::sync::Lazy;
+use rayon::prelude::*;
 use regex::Regex;
 
 #[derive(Debug, Eq, PartialEq, Hash)]
@@ -99,23 +100,24 @@ fn find_max_flow(
     to_open: &Vec<&Valve>,
     minutes: i32,
 ) -> i32 {
-    let mut flows = vec![];
-    for valve in to_open {
-        let distance = distances[&start_valve.name][&valve.name] as i32;
-        if distance >= minutes {
-            continue;
-        }
+    let flows = to_open
+        .par_iter()
+        .map(|valve| {
+            let distance = distances[&start_valve.name][&valve.name] as i32;
+            if distance >= minutes {
+                0
+            } else {
+                let minutes_left = minutes - distance - 1; // Time left - time to go to the valve - 1 minute to open the valve.
+                let flow = valve.flow * minutes_left; // Total flow of the valve until the end
+                let to_open = to_open
+                    .iter()
+                    .filter_map(|v| if v.name == valve.name { None } else { Some(*v) })
+                    .collect(); // remaining valves to open
 
-        let minutes_left = minutes - distance - 1; // Time left - time to go to the valve - 1 minute to open the valve.
-        let flow = valve.flow * minutes_left; // Total flow of the valve until the end
-        let to_open = to_open
-            .iter()
-            .filter_map(|v| if v.name == valve.name { None } else { Some(*v) })
-            .collect(); // remaining valves to open
-
-        let total_flow = flow + find_max_flow(valve, distances, &to_open, minutes_left); // Total flow is flow of the current valve + flow of all remaining visited valve
-        flows.push(total_flow);
-    }
+                flow + find_max_flow(valve, distances, &to_open, minutes_left) // Total flow is flow of the current valve + flow of all remaining visited valve
+            }
+        })
+        .collect::<Vec<i32>>();
 
     *flows.iter().max().unwrap_or(&0) // Max possible flow for the given minutes
 }
