@@ -2,16 +2,37 @@ extern crate core;
 
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::fmt::{Debug, Formatter};
+use std::hash::{Hash, Hasher};
 
 use once_cell::sync::Lazy;
 use rayon::prelude::*;
 use regex::Regex;
 
-#[derive(Debug, Eq, PartialEq, Hash)]
 struct Valve {
     name: String,
     flow: i32,
     neighbors: Vec<String>,
+}
+
+impl PartialEq for Valve {
+    fn eq(&self, other: &Self) -> bool {
+        self.name.eq(&other.name)
+    }
+}
+
+impl Hash for Valve {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
+impl Eq for Valve {}
+
+impl Debug for Valve {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.name, self.flow)
+    }
 }
 
 #[derive(Debug)]
@@ -40,6 +61,32 @@ impl<'a> PartialOrd for ToVisit<'a> {
 
 impl<'a> Eq for ToVisit<'a> {}
 
+#[derive(Debug, Default)]
+struct Path<'a> {
+    flow: i32,
+    path: Vec<&'a Valve>,
+}
+
+impl<'a> Eq for Path<'a> {}
+
+impl<'a> PartialEq<Self> for Path<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.path.eq(&other.path)
+    }
+}
+
+impl<'a> PartialOrd<Self> for Path<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<'a> Ord for Path<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.flow.cmp(&other.flow)
+    }
+}
+
 type DistancesTo = HashMap<String, HashMap<String, usize>>; // source -> [destination -> distance]
 
 static REGEX: Lazy<Regex> = Lazy::new(|| {
@@ -64,12 +111,16 @@ pub fn part1(input_path: &str) -> Option<i32> {
         .collect::<HashMap<String, &Valve>>();
 
     let distance_to: DistancesTo = build_distance_matrix(&valves, &valves_map);
-    Some(find_max_flow(
+    let Path { path, flow } = find_max_flow(
         valves_map["AA"],
         &distance_to,
         &non_zero_valves,
+        &[valves_map["AA"]],
         30,
-    ))
+    );
+    println!("Flow: {flow} - path {path:?}");
+
+    Some(flow)
 }
 
 pub fn part2(input_path: &str) -> Option<i32> {
@@ -79,7 +130,7 @@ pub fn part2(input_path: &str) -> Option<i32> {
         .map(parse)
         .collect::<Vec<Valve>>();
 
-    let _non_zero_valves = valves
+    let non_zero_valves = valves
         .iter()
         .filter(|v| v.flow > 0)
         .collect::<Vec<&Valve>>();
@@ -89,23 +140,57 @@ pub fn part2(input_path: &str) -> Option<i32> {
         .map(|x| (x.name.clone(), x))
         .collect::<HashMap<String, &Valve>>();
 
-    let _distance_to: DistancesTo = build_distance_matrix(&valves, &valves_map);
+    let distance_to: DistancesTo = build_distance_matrix(&valves, &valves_map);
+    let start_valve = valves_map["AA"];
 
-    None
+    let Path {
+        path: human_path,
+        flow: human_flow,
+    } = find_max_flow(
+        start_valve,
+        &distance_to,
+        &non_zero_valves,
+        &[start_valve],
+        26,
+    );
+
+    let remaining_valves = non_zero_valves
+        .into_iter()
+        .filter(|v| human_path.contains(v))
+        .collect();
+
+    println!("Human flow: {human_flow} - path {human_path:?}");
+    println!("Remaining valves: {remaining_valves:?}");
+
+    let Path {
+        path: elephant_path,
+        flow: elephant_flow,
+    } = find_max_flow(
+        start_valve,
+        &distance_to,
+        &remaining_valves,
+        &[start_valve],
+        26,
+    );
+
+    println!("Elephant flow: {elephant_flow} - path {elephant_path:?}");
+
+    Some(elephant_flow + human_flow)
 }
 
-fn find_max_flow(
-    start_valve: &Valve,
+fn find_max_flow<'a>(
+    start_valve: &'a Valve,
     distances: &DistancesTo,
-    to_open: &Vec<&Valve>,
+    to_open: &Vec<&'a Valve>,
+    current_path: &[&'a Valve],
     minutes: i32,
-) -> i32 {
-    let flows = to_open
+) -> Path<'a> {
+    to_open
         .par_iter()
-        .map(|valve| {
+        .filter_map(|valve| {
             let distance = distances[&start_valve.name][&valve.name] as i32;
             if distance >= minutes {
-                0
+                None
             } else {
                 let minutes_left = minutes - distance - 1; // Time left - time to go to the valve - 1 minute to open the valve.
                 let flow = valve.flow * minutes_left; // Total flow of the valve until the end
@@ -114,12 +199,21 @@ fn find_max_flow(
                     .filter_map(|v| if v.name == valve.name { None } else { Some(*v) })
                     .collect(); // remaining valves to open
 
-                flow + find_max_flow(valve, distances, &to_open, minutes_left) // Total flow is flow of the current valve + flow of all remaining visited valve
+                let mut next_path = current_path.to_owned();
+                next_path.push(valve);
+                let path = find_max_flow(valve, distances, &to_open, &next_path, minutes_left);
+
+                let mut new_complete_path = current_path.to_owned();
+                new_complete_path.extend(path.path);
+
+                Some(Path {
+                    path: new_complete_path,
+                    flow: path.flow + flow,
+                })
             }
         })
-        .collect::<Vec<i32>>();
-
-    *flows.iter().max().unwrap_or(&0) // Max possible flow for the given minutes
+        .max()
+        .unwrap_or_default()
 }
 
 fn build_distance_matrix(valves: &Vec<Valve>, valve_map: &HashMap<String, &Valve>) -> DistancesTo {
@@ -188,6 +282,6 @@ mod tests {
 
     #[test]
     pub fn test_part2() {
-        assert_eq!(part2("input_test.txt"), Some(1651));
+        assert_eq!(part2("input_test.txt"), Some(1707));
     }
 }
